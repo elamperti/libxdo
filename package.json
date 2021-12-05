@@ -1,6 +1,6 @@
 {
   "name": "libxdo",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "fake keyboard/mouse input, window management, and more using X11’s XTEST extension and other Xlib functions",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HeinrichAD/libxdo.git"
+    "url": "git+https://github.com/elamperti/libxdo.git"
   },
   "keywords": [
     "libxdo",
@@ -25,9 +25,9 @@
   "author": "HeinrichAD",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/HeinrichAD/libxdo/issues"
+    "url": "https://github.com/elamperti/libxdo/issues"
   },
-  "homepage": "https://github.com/HeinrichAD/libxdo#readme",
+  "homepage": "https://github.com/elamperti/libxdo#readme",
   "dependencies": {
     "ffi-napi": "^4.0.3",
     "ref-napi": "^3.0.3",

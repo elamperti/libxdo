@@ -1,19 +1,6 @@
-//'use strict';
-
-// nvm use lts/*
-
-// Contribution and Inspirations
-// https://github.com/jordansissel/xdotool
-// https://github.com/jordansissel/xdotool/blob/master/xdo.h   <-- sourced from here
-// https://github.com/node-ffi/node-ffi/wiki/Node-FFI-Tutorial#common-usage
-// https://stackabuse.com/how-to-create-c-cpp-addons-in-node/
-
-
-const ref       = require('ref-napi');
-//const CString   = ref.types.CString;
-const Struct    = require('ref-struct-di')(ref);
-//const ArrayType = require('ref-array');
-const ffi       = require('ffi-napi');
+const ref = require("ref-napi");
+const Struct = require("ref-struct-di")(ref);
+const ffi = require("ffi-napi");
 
 /**
  * @mainpage
@@ -27,7 +14,6 @@ const ffi       = require('ffi-napi');
  * @see xdo_new
  */
 
-
 // +++++++++++++++++++++++++++++++++++++++
 //         CONSTS AND STRUCTS
 // +++++++++++++++++++++++++++++++++++++++
@@ -39,9 +25,9 @@ const ffi       = require('ffi-napi');
  * allowing you to change window sizes based on character rows and columns
  * instead of pixels.
  */
-const SIZE_USEHINTS   = (1 << 0);
-const SIZE_USEHINTS_X = (1 << 1);
-const SIZE_USEHINTS_Y = (1 << 2);
+const SIZE_USEHINTS = 1 << 0;
+const SIZE_USEHINTS_X = 1 << 1;
+const SIZE_USEHINTS_Y = 1 << 2;
 
 /**
  * CURRENTWINDOW is a special identify for xdo input faking (mouse and
@@ -51,7 +37,7 @@ const SIZE_USEHINTS_Y = (1 << 2);
  * Generally, this means we will use XTEST instead of XSendEvent when sending
  * events.
  */
-const CURRENTWINDOW = (0);
+const CURRENTWINDOW = 0;
 
 /**
  * @internal
@@ -59,12 +45,12 @@ const CURRENTWINDOW = (0);
  * this key (keycode, modifiers, group, etc)
  */
 const struct_charcodemap_t = Struct({
-  'key'           : 'char', // wchar_t
-  'code'          : 'char', // KeyCode
-  'symbol'        : 'char', // KeySym
-  'group'         : 'int',
-  'modmask'       : 'int',
-  'needs_binding' : 'int',
+  key: "char", // wchar_t
+  code: "char", // KeyCode
+  symbol: "char", // KeySym
+  group: "int",
+  modmask: "int",
+  needs_binding: "int",
 });
 const p_struct_charcodemap_t = ref.refType(struct_charcodemap_t);
 
@@ -76,93 +62,90 @@ const p_struct_charcodemap_t = ref.refType(struct_charcodemap_t);
  * The main context.
  */
 const struct_xdo_t = Struct({
-  
   /** The Display for Xlib */
-  'xdpy'                     : ref.refType('int'), // Display*
+  xdpy: ref.refType("int"), // Display*
 
   /** The display name, if any. NULL if not specified. */
-  'display_name'             : 'char *',
-  
+  display_name: "char *",
+
   /** @internal Array of known keys/characters */
-  'charcodes'                : p_struct_charcodemap_t,
+  charcodes: p_struct_charcodemap_t,
 
   /** @internal Length of charcodes array */
-  'charcodes_len'            : 'int',
+  charcodes_len: "int",
 
   /** @internal highest keycode value */
-  'keycode_high'             : 'int',
+  keycode_high: "int",
 
   /** @internal lowest keycode value */
-  'keycode_low'              : 'int',
+  keycode_low: "int",
 
   /** @internal number of keysyms per keycode */
-  'keysyms_per_keycode'      : 'int',
+  keysyms_per_keycode: "int",
 
   /** Should we close the display when calling xdo_free? */
-  'close_display_when_freed' : 'int',
+  close_display_when_freed: "int",
 
   /** Be extra quiet? (omits some error/message output) */
-  'quiet'                    : 'int',
+  quiet: "int",
 
   /** Enable debug output? */
-  'debug'                    : 'int',
+  debug: "int",
 
   /** Feature flags, such as XDO_FEATURE_XTEST, etc... */
-  'features_mask'            : 'int',
+  features_mask: "int",
 });
 const p_struct_xdo_t = ref.refType(struct_xdo_t);
-
 
 /**
  * Search only window title. DEPRECATED - Use SEARCH_NAME
  * @see xdo_search_windows
  */
-const SEARCH_TITLE       = (1 << 0);
+const SEARCH_TITLE = 1 << 0;
 
 /**
  * Search only window class.
  * @see xdo_search_windows
  */
-const SEARCH_CLASS       = (1 << 1);
+const SEARCH_CLASS = 1 << 1;
 
 /**
  * Search only window name.
  * @see xdo_search_windows
  */
-const SEARCH_NAME        = (1 << 2);
+const SEARCH_NAME = 1 << 2;
 
 /**
  * Search only window pid.
  * @see xdo_search_windows
  */
-const SEARCH_PID         = (1 << 3);
+const SEARCH_PID = 1 << 3;
 
 /**
  * Search only visible windows.
  * @see xdo_search_windows
  */
-const SEARCH_ONLYVISIBLE = (1 << 4);
+const SEARCH_ONLYVISIBLE = 1 << 4;
 
 /**
- * Search only a specific screen. 
+ * Search only a specific screen.
  * @see xdo_search.screen
  * @see xdo_search_windows
  */
-const SEARCH_SCREEN      = (1 << 5);
+const SEARCH_SCREEN = 1 << 5;
 
 /**
  * Search only window class name.
  * @see xdo_search
  */
-const SEARCH_CLASSNAME   = (1 << 6);
+const SEARCH_CLASSNAME = 1 << 6;
 
 /**
  * Search a specific desktop
  * @see xdo_search.screen
  * @see xdo_search_windows
  */
-const SEARCH_DESKTOP     = (1 << 7);
-
+const SEARCH_DESKTOP = 1 << 7;
 
 /**
  * The window search query structure.
@@ -170,63 +153,59 @@ const SEARCH_DESKTOP     = (1 << 7);
  * @see xdo_search_windows
  */
 const struct_xdo_search_t = Struct({
-  
   /** pattern to test against a window title */
-  'title'        : 'string', // const char *
+  title: "string", // const char *
 
   /** pattern to test against a window class */
-  'winclass'     : 'string', // const char *
-  
+  winclass: "string", // const char *
+
   /** pattern to test against a window class */
-  'winclassname' : 'string', // const char *
+  winclassname: "string", // const char *
 
   /** pattern to test against a window name */
-  'winname'      : 'string', // const char *
+  winname: "string", // const char *
 
   /** window pid (From window atom _NET_WM_PID) */
-  'pid'          : 'int',
+  pid: "int",
 
   /** depth of search. 1 means only toplevel windows */
-  'max_depth'    : 'long',
+  max_depth: "long",
 
   /** boolean; set true to search only visible windows */
-  'only_visible' : 'int',
+  only_visible: "int",
 
   /** what screen to search, if any. If none given, search all screens */
-  'screen'       : 'int',
+  screen: "int",
 });
 const p_struct_xdo_search_t = ref.refType(struct_xdo_search_t);
 
-const XDO_ERROR   = 1;
+const XDO_ERROR = 1;
 const XDO_SUCCESS = 0;
 
 // For xdo_wait_for_window_size param to_or_from
-const SIZE_TO   = 0;
+const SIZE_TO = 0;
 const SIZE_FROM = 1;
 
 // For xdo_window_state param action
-const _NET_WM_STATE_REMOVE = 0;  // remove/unset property
-const _NET_WM_STATE_ADD    = 1;  // add/set property
-const _NET_WM_STATE_TOGGLE = 2;  // toggle property
+const _NET_WM_STATE_REMOVE = 0; // remove/unset property
+const _NET_WM_STATE_ADD = 1; // add/set property
+const _NET_WM_STATE_TOGGLE = 2; // toggle property
 
 // For xdo_find_window_client param direction
 /**
  * Find a client window that is a parent of the window given
  */
-const XDO_FIND_PARENTS  = (0);
+const XDO_FIND_PARENTS = 0;
 /**
  * Find a client window that is a child of the window given
  */
-const XDO_FIND_CHILDREN = (1);
-
-
+const XDO_FIND_CHILDREN = 1;
 
 // +++++++++++++++++++++++++++++++++++++++
 //         FUNCTION DEFINITION
 // +++++++++++++++++++++++++++++++++++++++
 
-module.exports = ffi.Library('libxdo', {
-
+module.exports = ffi.Library("libxdo", {
   /**
    * Create a new xdo_t instance.
    *
@@ -235,9 +214,12 @@ module.exports = ffi.Library('libxdo', {
    *
    * @return Pointer to a new xdo_t or NULL on failure
    */
-  'xdo_new' : [ p_struct_xdo_t, [ 
-      'string',  // const char *display
-  ] ],
+  xdo_new: [
+    p_struct_xdo_t,
+    [
+      "string", // const char *display
+    ],
+  ],
 
   /**
    * Create a new xdo_t instance with an existing X11 Display instance.
@@ -247,25 +229,36 @@ module.exports = ffi.Library('libxdo', {
    * @param close_display_when_freed If true, we will close the display when
    * xdo_free is called. Otherwise, we leave it open.
    */
-  'xdo_new_with_opened_display' : [ p_struct_xdo_t , [ 
-      ref.refType('int'),  // Display *xdpy
-      'string',            // const char *display
-      'int',               // int close_display_when_freed
-  ] ],
+  xdo_new_with_opened_display: [
+    p_struct_xdo_t,
+    [
+      ref.refType("int"), // Display *xdpy
+      "string", // const char *display
+      "int", // int close_display_when_freed
+    ],
+  ],
 
   /**
    * Return a string representing the version of this library
    */
-  'xdo_version' : [ 'string' /* const char* */, [ /* void */ ] ],
+  xdo_version: [
+    "string" /* const char* */,
+    [
+      /* void */
+    ],
+  ],
 
   /**
    * Free and destroy an xdo_t instance.
    *
    * If close_display_when_freed is set, then we will also close the Display.
    */
-  'xdo_free' : [ 'void', [ 
-      p_struct_xdo_t,  // xdo_t *xdo
-  ] ],
+  xdo_free: [
+    "void",
+    [
+      p_struct_xdo_t, // xdo_t *xdo
+    ],
+  ],
 
   /**
    * Move the mouse to a specific location.
@@ -274,12 +267,15 @@ module.exports = ffi.Library('libxdo', {
    * @param y the target Y coordinate on the screen in pixels.
    * @param screen the screen (number) you want to move on.
    */
-  'xdo_move_mouse' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // int x
-      'int',           // int y
-      'int',           // int screen
-  ] ],
+  xdo_move_mouse: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // int x
+      "int", // int y
+      "int", // int screen
+    ],
+  ],
 
   /**
    * Move the mouse to a specific location relative to the top-left corner
@@ -288,12 +284,15 @@ module.exports = ffi.Library('libxdo', {
    * @param x the target X coordinate on the screen in pixels.
    * @param y the target Y coordinate on the screen in pixels.
    */
-  'xdo_move_mouse_relative_to_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'int',           // int x
-      'int',           // int y
-  ] ],
+  xdo_move_mouse_relative_to_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // int x
+      "int", // int y
+    ],
+  ],
 
   /**
    * Move the mouse relative to it's current position.
@@ -301,11 +300,14 @@ module.exports = ffi.Library('libxdo', {
    * @param x the distance in pixels to move on the X axis.
    * @param y the distance in pixels to move on the Y axis.
    */
-  'xdo_move_mouse_relative' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // int x
-      'int',           // int y
-  ] ],
+  xdo_move_mouse_relative: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // int x
+      "int", // int y
+    ],
+  ],
 
   /**
    * Send a mouse press (aka mouse down) for a given button at the current mouse
@@ -315,11 +317,14 @@ module.exports = ffi.Library('libxdo', {
    * @param button The mouse button. Generally, 1 is left, 2 is middle, 3 is
    *    right, 4 is wheel up, 5 is wheel down.
    */
-  'xdo_mouse_down' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'int',           // int button
-  ] ],
+  xdo_mouse_down: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // int button
+    ],
+  ],
 
   /**
    * Send a mouse release (aka mouse up) for a given button at the current mouse
@@ -329,11 +334,14 @@ module.exports = ffi.Library('libxdo', {
    * @param button The mouse button. Generally, 1 is left, 2 is middle, 3 is
    *    right, 4 is wheel up, 5 is wheel down.
    */
-  'xdo_mouse_up' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'int',           // int button
-  ] ],
+  xdo_mouse_up: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // int button
+    ],
+  ],
 
   /**
    * Get the current mouse location (coordinates and screen number).
@@ -342,23 +350,28 @@ module.exports = ffi.Library('libxdo', {
    * @param y integer pointer where the Y coordinate will be stored
    * @param screen_num integer pointer where the screen number will be stored
    */
-  'xdo_get_mouse_location' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      ref.refType('int'),  // int *x
-      ref.refType('int'),  // int *y
-      ref.refType('int'),  // int *screen_num
-  ] ],
-
+  xdo_get_mouse_location: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("int"), // int *x
+      ref.refType("int"), // int *y
+      ref.refType("int"), // int *screen_num
+    ],
+  ],
 
   /**
    * Get the window the mouse is currently over
    *
    * @param window_ret Winter pointer where the window will be stored.
    */
-  'xdo_get_window_at_mouse' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      ref.refType('int'),  // Window *window_ret
-  ] ],
+  xdo_get_window_at_mouse: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("int"), // Window *window_ret
+    ],
+  ],
 
   /**
    * Get all mouse location-related data.
@@ -372,13 +385,16 @@ module.exports = ffi.Library('libxdo', {
    * @param window Window pointer where the window/client the mouse is over
    *   will be stored.
    */
-  'xdo_get_mouse_location2' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      ref.refType('int'),  // int *x_ret
-      ref.refType('int'),  // int *y_ret
-      ref.refType('int'),  // int *screen_num_ret
-      ref.refType('int'),  // int *window_ret
-  ] ],
+  xdo_get_mouse_location2: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("int"), // int *x_ret
+      ref.refType("int"), // int *y_ret
+      ref.refType("int"), // int *screen_num_ret
+      ref.refType("int"), // int *window_ret
+    ],
+  ],
 
   /**
    * Wait for the mouse to move from a location. This function will block
@@ -387,11 +403,14 @@ module.exports = ffi.Library('libxdo', {
    * @param origin_x the X position you expect the mouse to move from
    * @param origin_y the Y position you expect the mouse to move from
    */
-  'xdo_wait_for_mouse_move_from' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // int origin_x
-      'int',           // int origin_y
-  ] ],
+  xdo_wait_for_mouse_move_from: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // int origin_x
+      "int", // int origin_y
+    ],
+  ],
 
   /**
    * Wait for the mouse to move to a location. This function will block
@@ -400,11 +419,14 @@ module.exports = ffi.Library('libxdo', {
    * @param dest_x the X position you expect the mouse to move to
    * @param dest_y the Y position you expect the mouse to move to
    */
-  'xdo_wait_for_mouse_move_to' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // int dest_x
-      'int',           // int dest_y
-  ] ],
+  xdo_wait_for_mouse_move_to: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // int dest_x
+      "int", // int dest_y
+    ],
+  ],
 
   /**
    * Send a click for a specific mouse button at the current mouse location.
@@ -413,11 +435,14 @@ module.exports = ffi.Library('libxdo', {
    * @param button The mouse button. Generally, 1 is left, 2 is middle, 3 is
    *    right, 4 is wheel up, 5 is wheel down.
    */
-  'xdo_click_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'int',           // int button
-  ] ],
+  xdo_click_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // int button
+    ],
+  ],
 
   /**
    * Send a one or more clicks for a specific mouse button at the current mouse
@@ -427,13 +452,16 @@ module.exports = ffi.Library('libxdo', {
    * @param button The mouse button. Generally, 1 is left, 2 is middle, 3 is
    *    right, 4 is wheel up, 5 is wheel down.
    */
-  'xdo_click_window_multiple' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'int',           // int button
-      'int',           // int repeat
-      'int',           // useconds_t delay
-  ] ],
+  xdo_click_window_multiple: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // int button
+      "int", // int repeat
+      "int", // useconds_t delay
+    ],
+  ],
 
   /**
    * Type a string to the specified window.
@@ -446,12 +474,15 @@ module.exports = ffi.Library('libxdo', {
    * @param delay The delay between keystrokes in microseconds. 12000 is a decent
    *    choice if you don't have other plans.
    */
-  'xdo_enter_text_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'string',        // const char *string
-      'int',           // useconds_t delay
-  ] ],
+  xdo_enter_text_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "string", // const char *string
+      "int", // useconds_t delay
+    ],
+  ],
 
   /**
    * Send a keysequence to the specified window.
@@ -474,36 +505,45 @@ module.exports = ffi.Library('libxdo', {
    * @param keysequence The string keysequence to send.
    * @param delay The delay between keystrokes in microseconds.
    */
-  'xdo_send_keysequence_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'string',        // const char *keysequence
-      'int',           // useconds_t delay
-  ] ],
+  xdo_send_keysequence_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "string", // const char *keysequence
+      "int", // useconds_t delay
+    ],
+  ],
 
   /**
    * Send key release (up) events for the given key sequence.
    *
    * @see xdo_send_keysequence_window
    */
-  'xdo_send_keysequence_window_up' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'string',        // const char *keysequence
-      'int',           // useconds_t delay
-  ] ],
+  xdo_send_keysequence_window_up: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "string", // const char *keysequence
+      "int", // useconds_t delay
+    ],
+  ],
 
   /**
    * Send key press (down) events for the given key sequence.
    *
    * @see xdo_send_keysequence_window
    */
-  'xdo_send_keysequence_window_down' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'string',        // const char *keysequence
-      'int',           // useconds_t delay
-  ] ],
+  xdo_send_keysequence_window_down: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "string", // const char *keysequence
+      "int", // useconds_t delay
+    ],
+  ],
 
   /**
    * Send a series of keystrokes.
@@ -516,15 +556,18 @@ module.exports = ffi.Library('libxdo', {
    *   the keys being pressed. If NULL, we don't save the modifiers.
    * @param delay The delay between keystrokes in microseconds.
    */
-  'xdo_send_keysequence_window_list_do' : [ 'int', [ 
-      p_struct_xdo_t,          // const xdo_t *xdo
-      'int',                   // Window window
-      p_struct_charcodemap_t,  // charcodemap_t *keys
-      'int',                   // int nkeys
-      'int',                   // int pressed
-      ref.refType('int'),      // int *modifier
-      'int',                   // useconds_t delay
-  ] ],
+  xdo_send_keysequence_window_list_do: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      p_struct_charcodemap_t, // charcodemap_t *keys
+      "int", // int nkeys
+      "int", // int pressed
+      ref.refType("int"), // int *modifier
+      "int", // useconds_t delay
+    ],
+  ],
 
   /**
    * Wait for a window to have a specific map state.
@@ -538,23 +581,29 @@ module.exports = ffi.Library('libxdo', {
    * @param wid the window you want to wait for.
    * @param map_state the state to wait for.
    */
-  'xdo_wait_for_window_map_state' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-      'int',           // int map_state
-  ] ],
+  xdo_wait_for_window_map_state: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      "int", // int map_state
+    ],
+  ],
 
   /**
-   * 
+   *
    */
-  'xdo_wait_for_window_size' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'int',           // unsigned int width
-      'int',           // unsigned int height
-      'int',           // int flags
-      'int',           // int to_or_from
-  ] ],
+  xdo_wait_for_window_size: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // unsigned int width
+      "int", // unsigned int height
+      "int", // int flags
+      "int", // int to_or_from
+    ],
+  ],
 
   /**
    * Move a window to a specific location.
@@ -565,17 +614,20 @@ module.exports = ffi.Library('libxdo', {
    * @param x the X coordinate to move to.
    * @param y the Y coordinate to move to.
    */
-  'xdo_move_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-      'int',           // int x
-      'int',           // int y
-  ] ],
+  xdo_move_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      "int", // int x
+      "int", // int y
+    ],
+  ],
 
   /**
    * Apply a window's sizing hints (if any) to a given width and height.
    *
-   * This function wraps XGetWMNormalHints() and applies any 
+   * This function wraps XGetWMNormalHints() and applies any
    * resize increment and base size to your given width and height values.
    *
    * @param window the window to use
@@ -584,14 +636,17 @@ module.exports = ffi.Library('libxdo', {
    * @param width_ret the return location of the translated width
    * @param height_ret the return location of the translated height
    */
-  'xdo_translate_window_with_sizehint' : [ 'int', [ 
-      p_struct_xdo_t,               // const xdo_t *xdo
-      'int',                        // Window window
-      'int',                        // unsigned int width
-      'int',                        // unsigned int height
-      ref.refType('int'),           // unsigned int *width_ret
-      ref.refType('int'),           // unsigned int *height_ret
-  ] ],
+  xdo_translate_window_with_sizehint: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // unsigned int width
+      "int", // unsigned int height
+      ref.refType("int"), // unsigned int *width_ret
+      ref.refType("int"), // unsigned int *height_ret
+    ],
+  ],
 
   /**
    * Change the window size.
@@ -602,13 +657,16 @@ module.exports = ffi.Library('libxdo', {
    * @param flags if 0, use pixels for units. If SIZE_USEHINTS, then
    *   the units will be relative to the window size hints.
    */
-  'xdo_set_window_size' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-      'int',           // int w
-      'int',           // int h
-      'int',           // int flags
-  ] ],
+  xdo_set_window_size: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      "int", // int w
+      "int", // int h
+      "int", // int flags
+    ],
+  ],
 
   /**
    * Change a window property.
@@ -619,12 +677,15 @@ module.exports = ffi.Library('libxdo', {
    * @param property the string name of the property.
    * @param value the string value of the property.
    */
-  'xdo_set_window_property' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-      'string',        // const char *property
-      'string',        // const char *value
-  ] ],
+  xdo_set_window_property: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      "string", // const char *property
+      "string", // const char *value
+    ],
+  ],
 
   /**
    * Change the window's classname and or class.
@@ -632,21 +693,27 @@ module.exports = ffi.Library('libxdo', {
    * @param name The new class name. If NULL, no change.
    * @param _class The new class. If NULL, no change.
    */
-  'xdo_set_window_class' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-      'string',        // const char *name
-      'string',        // const char *_class
-  ] ],
+  xdo_set_window_class: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      "string", // const char *name
+      "string", // const char *_class
+    ],
+  ],
 
   /**
    * Sets the urgency hint for a window.
    */
-  'xdo_set_window_urgency' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-      'int',           // int urgency
-  ] ],
+  xdo_set_window_urgency: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      "int", // int urgency
+    ],
+  ],
 
   /**
    * Set the override_redirect value for a window. This generally means
@@ -657,11 +724,14 @@ module.exports = ffi.Library('libxdo', {
    * normal application window.
    *
    */
-  'xdo_set_window_override_redirect' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-      'int',           // int override_redirect
-  ] ],
+  xdo_set_window_override_redirect: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      "int", // int override_redirect
+    ],
+  ],
 
   /**
    * Focus a window.
@@ -669,10 +739,13 @@ module.exports = ffi.Library('libxdo', {
    * @see xdo_activate_window
    * @param wid the window to focus.
    */
-  'xdo_focus_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-  ] ],
+  xdo_focus_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+    ],
+  ],
 
   /**
    * Raise a window to the top of the window stack. This is also sometimes
@@ -680,10 +753,13 @@ module.exports = ffi.Library('libxdo', {
    *
    * @param wid The window to raise.
    */
-  'xdo_raise_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-  ] ],
+  xdo_raise_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+    ],
+  ],
 
   /**
    * Get the window currently having focus.
@@ -691,10 +767,13 @@ module.exports = ffi.Library('libxdo', {
    * @param window_ret Pointer to a window where the currently-focused window
    *   will be stored.
    */
-  'xdo_get_focused_window' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      ref.refType('int'),  // Window *window_ret
-  ] ],
+  xdo_get_focused_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("int"), // Window *window_ret
+    ],
+  ],
 
   /**
    * Wait for a window to have or lose focus.
@@ -702,11 +781,14 @@ module.exports = ffi.Library('libxdo', {
    * @param window The window to wait on
    * @param want_focus If 1, wait for focus. If 0, wait for loss of focus.
    */
-  'xdo_focus_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'int',           // int want_focus
-  ] ],
+  xdo_focus_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // int want_focus
+    ],
+  ],
 
   /**
    * Get the PID owning a window. Not all applications support this.
@@ -715,10 +797,13 @@ module.exports = ffi.Library('libxdo', {
    * @param window the window to query.
    * @return the process id or 0 if no pid found.
    */
-  'xdo_get_pid_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-  ] ],
+  xdo_get_pid_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+    ],
+  ],
 
   /**
    * Like xdo_get_focused_window, but return the first ancestor-or-self window *
@@ -729,10 +814,13 @@ module.exports = ffi.Library('libxdo', {
    * @param window_ret Pointer to a window where the currently-focused window
    *   will be stored.
    */
-  'xdo_get_focused_window_sane' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      ref.refType('int'),  // Window *window_ret
-  ] ],
+  xdo_get_focused_window_sane: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("int"), // Window *window_ret
+    ],
+  ],
 
   /**
    * Activate a window. This is generally a better choice than xdo_focus_window
@@ -745,10 +833,13 @@ module.exports = ffi.Library('libxdo', {
    *
    * @param wid the window to activate
    */
-  'xdo_activate_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-  ] ],
+  xdo_activate_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+    ],
+  ],
 
   /**
    * Wait for a window to be active or not active.
@@ -759,11 +850,14 @@ module.exports = ffi.Library('libxdo', {
    * @param window the window to wait on
    * @param active If 1, wait for active. If 0, wait for inactive.
    */
-  'xdo_wait_for_window_active' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-      'int',           // Window active
-  ] ],
+  xdo_wait_for_window_active: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // Window active
+    ],
+  ],
 
   /**
    * Map a window. This mostly means to make the window visible if it is
@@ -771,51 +865,63 @@ module.exports = ffi.Library('libxdo', {
    *
    * @param wid the window to map.
    */
-  'xdo_map_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-  ] ],
+  xdo_map_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+    ],
+  ],
 
   /**
    * Unmap a window
    *
    * @param wid the window to unmap
    */
-  'xdo_unmap_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-  ] ],
+  xdo_unmap_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+    ],
+  ],
 
   /**
    * Minimize a window.
    */
-  'xdo_minimize_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-  ] ],
+  xdo_minimize_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+    ],
+  ],
 
   // /**
   //  * Change window state
   //  * @param action the _NET_WM_STATE action
   //  */
-  // 'xdo_window_state' : [ 'int', [ 
+  // 'xdo_window_state' : [ 'int', [
   //     p_struct_xdo_t,  // const xdo_t *xdo
   //     'int',           // Window window
   //     'long',          // unsigned long action
   //     'string',        // const char *property
   // ] ],
 
-  /** 
+  /**
    * Reparents a window
    *
    * @param wid_source the window to reparent
    * @param wid_target the new parent window
    */
-  'xdo_reparent_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid_source
-      'int',           // Window wid_target
-  ] ],
+  xdo_reparent_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid_source
+      "int", // Window wid_target
+    ],
+  ],
 
   /**
    * Get a window's location.
@@ -828,13 +934,16 @@ module.exports = ffi.Library('libxdo', {
    * @param screen_ret Pointer to Screen* where the Screen* the window on is
    *   stored. If NULL, this parameter is ignored.
    */
-  'xdo_get_window_location' : [ 'int', [ 
-      p_struct_xdo_t,                   // const xdo_t *xdo
-      'int',                            // Window wid
-      ref.refType('int'),               // int *x_ret
-      ref.refType('int'),               // int *y_ret
-      ref.refType(ref.refType('int')),  // Screen **screen_ret
-  ] ],
+  xdo_get_window_location: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      ref.refType("int"), // int *x_ret
+      ref.refType("int"), // int *y_ret
+      ref.refType(ref.refType("int")), // Screen **screen_ret
+    ],
+  ],
 
   /**
    * Get a window's size.
@@ -843,12 +952,15 @@ module.exports = ffi.Library('libxdo', {
    * @param width_ret pointer to unsigned int where the width is stored.
    * @param height_ret pointer to unsigned int where the height is stored.
    */
-  'xdo_get_window_size' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      'int',               // Window wid
-      ref.refType('int'),  // unsigned int *width_ret
-      ref.refType('int'),  // unsigned int *height_ret
-  ] ],
+  xdo_get_window_size: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      ref.refType("int"), // unsigned int *width_ret
+      ref.refType("int"), // unsigned int *height_ret
+    ],
+  ],
 
   /* pager-like behaviors */
 
@@ -859,10 +971,13 @@ module.exports = ffi.Library('libxdo', {
    *
    * @param window_ret Pointer to Window where the active window is stored.
    */
-  'xdo_get_active_window' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      ref.refType('int'),  // Window *window_ret
-  ] ],
+  xdo_get_active_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("int"), // Window *window_ret
+    ],
+  ],
 
   /**
    * Get a window ID by clicking on it. This function blocks until a selection
@@ -870,10 +985,13 @@ module.exports = ffi.Library('libxdo', {
    *
    * @param window_ret Pointer to Window where the selected window is stored.
    */
-  'xdo_select_window_with_click' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      ref.refType('int'),  // Window *window_ret
-  ] ],
+  xdo_select_window_with_click: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("int"), // Window *window_ret
+    ],
+  ],
 
   /**
    * Set the number of desktops.
@@ -881,10 +999,13 @@ module.exports = ffi.Library('libxdo', {
    *
    * @param ndesktops the new number of desktops to set.
    */
-  'xdo_set_number_of_desktops' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'long',          // long ndesktops
-  ] ],
+  xdo_set_number_of_desktops: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "long", // long ndesktops
+    ],
+  ],
 
   /**
    * Get the current number of desktops.
@@ -893,10 +1014,13 @@ module.exports = ffi.Library('libxdo', {
    * @param ndesktops pointer to long where the current number of desktops is
    *   stored
    */
-  'xdo_get_number_of_desktops' : [ 'int', [ 
-      p_struct_xdo_t,       // const xdo_t *xdo
-      ref.refType('long'),  // long *ndesktops
-  ] ],
+  xdo_get_number_of_desktops: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("long"), // long *ndesktops
+    ],
+  ],
 
   /**
    * Switch to another desktop.
@@ -904,10 +1028,13 @@ module.exports = ffi.Library('libxdo', {
    *
    * @param desktop The desktop number to switch to.
    */
-  'xdo_set_current_desktop' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'long',          // long desktop
-  ] ],
+  xdo_set_current_desktop: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "long", // long desktop
+    ],
+  ],
 
   /**
    * Get the current desktop.
@@ -915,10 +1042,13 @@ module.exports = ffi.Library('libxdo', {
    *
    * @param desktop pointer to long where the current desktop number is stored.
    */
-  'xdo_get_current_desktop' : [ 'int', [ 
-      p_struct_xdo_t,       // const xdo_t *xdo
-      ref.refType('long'),  // long *desktop
-  ] ],
+  xdo_get_current_desktop: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("long"), // long *desktop
+    ],
+  ],
 
   /**
    * Move a window to another desktop
@@ -927,11 +1057,14 @@ module.exports = ffi.Library('libxdo', {
    * @param wid the window to move
    * @param desktop the desktop destination for the window
    */
-  'xdo_set_desktop_for_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window wid
-      'long',          // long desktop
-  ] ],
+  xdo_set_desktop_for_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      "long", // long desktop
+    ],
+  ],
 
   /**
    * Get the desktop a window is on.
@@ -943,11 +1076,14 @@ module.exports = ffi.Library('libxdo', {
    * @param wid the window to query
    * @param deskto pointer to long where the desktop of the window is stored
    */
-  'xdo_get_desktop_for_window' : [ 'int', [ 
-      p_struct_xdo_t,       // const xdo_t *xdo
-      'int',                // Window wid
-      ref.refType('long'),  // long *desktop
-  ] ],
+  xdo_get_desktop_for_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window wid
+      ref.refType("long"), // long *desktop
+    ],
+  ],
 
   /**
    * Search for windows.
@@ -957,53 +1093,62 @@ module.exports = ffi.Library('libxdo', {
    * @param nwindows_ret the number of windows (length of windowlist_ret)
    * @see xdo_search_t
    */
-  'xdo_search_windows' : [ 'int', [ 
-      p_struct_xdo_t,                   // const xdo_t *xdo
-      p_struct_xdo_search_t,            // const xdo_search_t *search
-      ref.refType(ref.refType('int')),  // Window **windowlist_ret
-      ref.refType('int'),               // unsigned int *nwindows_ret
-  ] ],
+  xdo_search_windows: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      p_struct_xdo_search_t, // const xdo_search_t *search
+      ref.refType(ref.refType("int")), // Window **windowlist_ret
+      ref.refType("int"), // unsigned int *nwindows_ret
+    ],
+  ],
 
   /**
    * Generic property fetch.
    *
    * @param window the window to query
    * @param atom the Atom to request
-   * @param nitems the number of items 
+   * @param nitems the number of items
    * @param type the type of the return
    * @param size the size of the type
    * @return data consisting of 'nitems' items of size 'size' and type 'type'
    *   will need to be cast to the type before using.
    */
-  'xdo_get_window_property_by_atom' : [ 'char *' /* unsigned char* */, [ 
-      p_struct_xdo_t,       // const xdo_t *xdo
-      'int',                // Window window
-      'int',                // Atom atom
-      ref.refType('long'),  // long *nitems
-      ref.refType('int'),   // Atom *type
-      ref.refType('int'),   // int *size
-  ] ],
+  xdo_get_window_property_by_atom: [
+    "char *" /* unsigned char* */,
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "int", // Atom atom
+      ref.refType("long"), // long *nitems
+      ref.refType("int"), // Atom *type
+      ref.refType("int"), // int *size
+    ],
+  ],
 
   /**
    * Get property of window by name of atom.
    *
    * @param window the window to query
    * @param property the name of the atom
-   * @param nitems the number of items 
+   * @param nitems the number of items
    * @param type the type of the return
    * @param size the size of the type
    * @return data consisting of 'nitems' items of size 'size' and type 'type'
    *   will need to be cast to the type before using.
    */
-  'xdo_get_window_property' : [ 'int', [ 
-      p_struct_xdo_t,                    // const xdo_t *xdo
-      'int',                             // Window window
-      'string',                          // const char *property
-      ref.refType(ref.refType('char')),  // unsigned char **value
-      ref.refType('long'),               // long *nitems
-      ref.refType('int'),                // Atom *type
-      ref.refType('int'),                // int *size
-  ] ],
+  xdo_get_window_property: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      "string", // const char *property
+      ref.refType(ref.refType("char")), // unsigned char **value
+      ref.refType("long"), // long *nitems
+      ref.refType("int"), // Atom *type
+      ref.refType("int"), // int *size
+    ],
+  ],
 
   /**
    * Get the current input state. This is a mask value containing any of the
@@ -1012,9 +1157,12 @@ module.exports = ffi.Library('libxdo', {
    *
    * @return the input mask
    */
-  'xdo_get_input_state' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-  ] ],
+  xdo_get_input_state: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+    ],
+  ],
 
   /**
    * If you need the symbol map, use this method.
@@ -1024,7 +1172,12 @@ module.exports = ffi.Library('libxdo', {
    *
    * @returns array of strings.
    */
-  'xdo_get_symbol_map' : [ ref.refType('string'), [ /* void */ ] ],
+  xdo_get_symbol_map: [
+    ref.refType("string"),
+    [
+      /* void */
+    ],
+  ],
 
   /* active modifiers stuff */
 
@@ -1035,47 +1188,59 @@ module.exports = ffi.Library('libxdo', {
    *    by this function.
    * @param nkeys Pointer to integer where the number of keys will be stored.
    */
-  'xdo_get_active_modifiers' : [ 'int', [ 
-      p_struct_xdo_t,                       // const xdo_t *xdo
-      ref.refType(p_struct_charcodemap_t),  // charcodemap_t **keys
-      ref.refType('int'),                   // int *nkeys
-  ] ],
+  xdo_get_active_modifiers: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType(p_struct_charcodemap_t), // charcodemap_t **keys
+      ref.refType("int"), // int *nkeys
+    ],
+  ],
 
   /**
    * Send any events necessary to clear the active modifiers.
-   * For example, if you are holding 'alt' when xdo_get_active_modifiers is 
+   * For example, if you are holding 'alt' when xdo_get_active_modifiers is
    * called, then this method will send a key-up for 'alt'
    */
-  'xdo_clear_active_modifiers' : [ 'int', [ 
-      p_struct_xdo_t,          // const xdo_t *xdo
-      'int',                   // Window window
-      p_struct_charcodemap_t,  // charcodemap_t *active_mods
-      'int',                   // int active_mods_n
-  ] ],
+  xdo_clear_active_modifiers: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      p_struct_charcodemap_t, // charcodemap_t *active_mods
+      "int", // int active_mods_n
+    ],
+  ],
 
   /**
    * Send any events necessary to make these modifiers active.
    * This is useful if you just cleared the active modifiers and then wish
    * to restore them after.
    */
-  'xdo_set_active_modifiers' : [ 'int', [ 
-      p_struct_xdo_t,          // const xdo_t *xdo
-      'int',                   // Window window
-      p_struct_charcodemap_t,  // charcodemap_t *active_mods
-      'int',                   // int active_mods_n
-  ] ],
+  xdo_set_active_modifiers: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      p_struct_charcodemap_t, // charcodemap_t *active_mods
+      "int", // int active_mods_n
+    ],
+  ],
 
   /**
    * Get the position of the current viewport.
    *
    * This is only relevant if your window manager supports
-   * _NET_DESKTOP_VIEWPORT 
+   * _NET_DESKTOP_VIEWPORT
    */
-  'xdo_get_desktop_viewport' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      ref.refType('int'),  // int *x_ret
-      ref.refType('int'),  // int *y_ret
-  ] ],
+  xdo_get_desktop_viewport: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("int"), // int *x_ret
+      ref.refType("int"), // int *y_ret
+    ],
+  ],
 
   /**
    * Set the position of the current viewport.
@@ -1083,92 +1248,116 @@ module.exports = ffi.Library('libxdo', {
    * This is only relevant if your window manager supports
    * _NET_DESKTOP_VIEWPORT
    */
-  'xdo_set_desktop_viewport' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // int x
-      'int',           // int y
-  ] ],
+  xdo_set_desktop_viewport: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // int x
+      "int", // int y
+    ],
+  ],
 
   /**
    * Kill a window and the client owning it.
    *
    */
-  'xdo_kill_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-  ] ],
+  xdo_kill_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+    ],
+  ],
 
   /**
    * Close a window without trying to kill the client.
    *
    */
-  'xdo_close_window' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // Window window
-  ] ],
+  xdo_close_window: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+    ],
+  ],
 
   /**
    * Find a client window (child) in a given window. Useful if you get the
    * window manager's decorator window rather than the client window.
    */
-  'xdo_find_window_client' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      'int',               // Window window
-      ref.refType('int'),  // Window *window_ret
-      'int',               // int direction
-  ] ],
+  xdo_find_window_client: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      ref.refType("int"), // Window *window_ret
+      "int", // int direction
+    ],
+  ],
 
   /**
    * Get a window's name, if any.
    *
    * TODO(sissel): Document
    */
-  'xdo_get_window_name' : [ 'int', [ 
-      p_struct_xdo_t,       // const xdo_t *xdo
-      'int',                // Window window
-      ref.refType('char'),  // unsigned char **name_ret
-      ref.refType('int'),   // int *name_len_ret
-      ref.refType('int'),   // int *name_len_ret
-  ] ],
+  xdo_get_window_name: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // Window window
+      ref.refType("char"), // unsigned char **name_ret
+      ref.refType("int"), // int *name_len_ret
+      ref.refType("int"), // int *name_len_ret
+    ],
+  ],
 
   /**
    * Disable an xdo feature.
    *
    * This function is mainly used by libxdo itself, however, you may find it useful
    * in your own applications.
-   * 
+   *
    * @see XDO_FEATURES
    */
-  'xdo_disable_feature' : [ 'void', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // int feature
-  ] ],
+  xdo_disable_feature: [
+    "void",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // int feature
+    ],
+  ],
 
   /**
    * Enable an xdo feature.
    *
    * This function is mainly used by libxdo itself, however, you may find it useful
    * in your own applications.
-   * 
+   *
    * @see XDO_FEATURES
    */
-  'xdo_enable_feature' : [ 'void', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // int feature
-  ] ],
+  xdo_enable_feature: [
+    "void",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // int feature
+    ],
+  ],
 
   /**
    * Check if a feature is enabled.
    *
    * This function is mainly used by libxdo itself, however, you may find it useful
    * in your own applications.
-   * 
+   *
    * @see XDO_FEATURES
    */
-  'xdo_has_feature' : [ 'int', [ 
-      p_struct_xdo_t,  // const xdo_t *xdo
-      'int',           // int feature
-  ] ],
+  xdo_has_feature: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      "int", // int feature
+    ],
+  ],
 
   /**
    * Query the viewport (your display) dimensions
@@ -1177,11 +1366,13 @@ module.exports = ffi.Library('libxdo', {
    * If Xineram is disabled, we will report the root window's dimensions
    * for the given screen.
    */
-  'xdo_get_viewport_dimensions' : [ 'int', [ 
-      p_struct_xdo_t,      // const xdo_t *xdo
-      ref.refType('int'),  // unsigned int *width
-      ref.refType('int'),  // unsigned int *height
-      'int',               // int screen
-  ] ],
-
+  xdo_get_viewport_dimensions: [
+    "int",
+    [
+      p_struct_xdo_t, // const xdo_t *xdo
+      ref.refType("int"), // unsigned int *width
+      ref.refType("int"), // unsigned int *height
+      "int", // int screen
+    ],
+  ],
 });
